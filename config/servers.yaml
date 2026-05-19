@@ -1,0 +1,24 @@
+servers:
+  - id: server-a
+    name: 開発サーバA
+    host: 192.168.1.10
+    ssh_user: devuser
+    ssh_port: 22
+
+  - id: server-b
+    name: 開発サーバB
+    host: 192.168.1.11
+    ssh_user: devuser
+    ssh_port: 22
+
+  - id: server-c
+    name: 開発サーバC
+    host: 192.168.1.12
+    ssh_user: devuser
+    ssh_port: 22
+
+  - id: server-d
+    name: 開発サーバD
+    host: 192.168.1.13
+    ssh_user: devuser
+    ssh_port: 22

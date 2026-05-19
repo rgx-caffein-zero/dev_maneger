@@ -1,0 +1,9 @@
+data/
+ssh/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+README.md
+*.bak
+_backup/
