@@ -80,16 +80,23 @@ chmod 600 /home/devuser/.ssh/authorized_keys
 
 ### 2-1. ホスト機を監視対象に含める場合
 
-コンテナから「コンテナを動かしているホスト機」へSSHする際は、ホスト機の通常IP（例: `192.168.1.10`）ではループバックNATの都合で到達できない環境があります。
-このツールでは `docker-compose.yml` の `extra_hosts` で `host.docker.internal` を有効化しているので、`config/servers.yaml` のホスト機エントリの `host` を **`host.docker.internal`** に設定してください（サンプルではそうなっています）。
+このツールは `docker-compose.yml` で **`network_mode: host`** を指定しており、コンテナはホストと同じネットワーク名前空間で動作します。そのため、`config/servers.yaml` のホスト機エントリの `host` には **`localhost`** を指定してください（サンプルではそうなっています）。
 
 ```yaml
 - id: server-a
   name: 開発サーバA (ホスト)
-  host: host.docker.internal   # ← 管理ホスト自身を指す
+  host: localhost              # ← 管理ホスト自身を指す
   ssh_user: devuser
   ssh_port: 22
 ```
+
+> ℹ️ `network_mode: host` を採用した理由
+> - `host.docker.internal:host-gateway` は Docker Engine 20.10+ でしか動作せず、環境依存があったため
+> - 単一ホスト＋内部ツールという用途では、ネットワーク分離より接続性を優先
+
+> ⚠️ 副作用
+> - ホストの **8501番ポート** をそのまま使用します（他で使っていないこと）
+> - `docker-compose.yml` の `ports:` 設定は無効です
 
 ### 3. 起動
 

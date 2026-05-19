@@ -1,15 +1,14 @@
 # サーバ一覧
 # 増減は項目を追加・削除してください（ページ再読み込みで反映）。
 #
-# このツールを動かしているホスト機自身を監視対象に含める場合は、
-# host を `host.docker.internal` にしてください
-# （コンテナ→ホストへの到達経路が安定します。docker-compose.yml の extra_hosts と対応）。
+# このツールは docker-compose.yml で network_mode: host を指定しているため、
+# 管理ホスト自身を監視対象に含める場合は host: localhost を指定してください。
 
 servers:
   # 管理ホスト自身（このツールが動いているサーバ）
   - id: server-a
     name: 開発サーバA (ホスト)
-    host: host.docker.internal
+    host: localhost
     ssh_user: devuser
     ssh_port: 22
 

@@ -2,16 +2,16 @@ services:
   app:
     build: .
     container_name: dev_maneger
-    ports:
-      - "8501:8501"
+    # ホストと同じネットワーク名前空間で動作させる。
+    # - コンテナから localhost でホスト自身にSSH到達可能
+    # - 他サーバへのSSHは実IPで到達
+    # - Docker バージョン非依存（extra_hosts: host-gateway を使わない）
+    # 副作用: ports: は無効になる（host の 8501 をそのまま使用）。
+    network_mode: host
     volumes:
       - ./config:/app/config:ro
       - ./data:/app/data
       - ./ssh:/root/.ssh:ro
     environment:
       - TZ=Asia/Tokyo
-    extra_hosts:
-      # コンテナからホスト機にアクセスするための名前解決
-      # ホスト機(管理ホスト自身)を servers.yaml で host: host.docker.internal と指定するために必要
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
