@@ -10,4 +10,8 @@ services:
       - ./ssh:/root/.ssh:ro
     environment:
       - TZ=Asia/Tokyo
+    extra_hosts:
+      # コンテナからホスト機にアクセスするための名前解決
+      # ホスト機(管理ホスト自身)を servers.yaml で host: host.docker.internal と指定するために必要
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped

@@ -46,22 +46,31 @@ for server in servers:
             )
             continue
 
-        gpu_cols = st.columns(len(status["gpus"]))
-        for i, gpu in enumerate(status["gpus"]):
-            with gpu_cols[i]:
-                util = gpu["util_percent"]
-                used = gpu["memory_used_mib"]
-                total = gpu["memory_total_mib"]
-                mem_pct = (used / total * 100) if total else 0.0
+        for gpu in status["gpus"]:
+            # utilization.gpu は「演算利用率」。VRAMを占有していても計算してなければ0%になる点に注意
+            util = gpu["util_percent"]
+            used = gpu["memory_used_mib"]
+            total = gpu["memory_total_mib"]
+            mem_pct = (used / total * 100) if total else 0.0
 
+            st.markdown(f"**GPU{gpu['index']}: {gpu['name']}**")
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
                 st.metric(
-                    label=f"GPU{gpu['index']}: {gpu['name']}",
-                    value=f"利用率 {util}%",
+                    label="GPU演算利用率",
+                    value=f"{util}%",
+                    help="nvidia-smi の utilization.gpu。計算中かどうかの指標です。",
                 )
-                st.progress(
-                    min(mem_pct / 100, 1.0),
-                    text=f"VRAM: {used} / {total} MiB ({mem_pct:.1f}%)",
+            with m_col2:
+                st.metric(
+                    label="VRAM使用率",
+                    value=f"{mem_pct:.1f}%",
+                    help=f"{used} / {total} MiB",
                 )
+            st.progress(
+                min(mem_pct / 100, 1.0),
+                text=f"VRAM: {used} / {total} MiB",
+            )
 
         if status["processes"]:
             with st.expander(

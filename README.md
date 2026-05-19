@@ -58,21 +58,38 @@ servers:
 
 ### 2. SSH鍵の配置
 
-管理ホスト（このツールを動かすサーバ）から、他3台へ **パスワード無しでSSHログイン** できる状態にします。
+管理ホスト（このツールを動かすサーバ）から、**自分自身を含む全4台** へパスワード無しでSSHログインできる状態にします。
 
 ```bash
-# 例: 管理ホストで鍵を生成
+# 管理ホスト上で鍵を生成（プロジェクト直下の ssh/ に作成）
 ssh-keygen -t ed25519 -f ./ssh/id_ed25519 -N ""
 
-# 各対象サーバへ公開鍵を配布
+# 他3台へ公開鍵を配布
 ssh-copy-id -i ./ssh/id_ed25519.pub devuser@192.168.1.11
 ssh-copy-id -i ./ssh/id_ed25519.pub devuser@192.168.1.12
 ssh-copy-id -i ./ssh/id_ed25519.pub devuser@192.168.1.13
+
+# 管理ホスト自身の devuser にも同じ公開鍵を登録（自分→自分のSSHを許可）
+cat ./ssh/id_ed25519.pub >> /home/devuser/.ssh/authorized_keys
+chmod 600 /home/devuser/.ssh/authorized_keys
 ```
 
 `./ssh/` ディレクトリはコンテナの `/root/.ssh` に読み取り専用でマウントされます。
 
 > ⚠️ `ssh/` 以下は `.gitignore` 対象です。秘密鍵をコミットしないでください。
+
+### 2-1. ホスト機を監視対象に含める場合
+
+コンテナから「コンテナを動かしているホスト機」へSSHする際は、ホスト機の通常IP（例: `192.168.1.10`）ではループバックNATの都合で到達できない環境があります。
+このツールでは `docker-compose.yml` の `extra_hosts` で `host.docker.internal` を有効化しているので、`config/servers.yaml` のホスト機エントリの `host` を **`host.docker.internal`** に設定してください（サンプルではそうなっています）。
+
+```yaml
+- id: server-a
+  name: 開発サーバA (ホスト)
+  host: host.docker.internal   # ← 管理ホスト自身を指す
+  ssh_user: devuser
+  ssh_port: 22
+```
 
 ### 3. 起動
 
