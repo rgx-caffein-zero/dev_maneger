@@ -5,7 +5,7 @@
 ## 機能
 
 - 📝 **利用申請**: サーバ・用途・GPU使用有無・期間（時間単位）の登録／編集／取消
-- 📅 **予約状況**: ガントチャート風UIで全サーバの予約を一覧表示
+- 📅 **予約状況**: カレンダー表示（月／週／日／一覧切替）で予約状況を表示。サーバ・GPU有無で絞り込み可能
 - 📊 **サーバ監視**: SSH経由で `nvidia-smi` を実行し、VRAM・GPU利用率・プロセス一覧をリアルタイム表示
 - ⚙️ サーバ台数は `config/servers.yaml` の編集だけで増減可能
 
@@ -80,15 +80,20 @@ chmod 600 /home/devuser/.ssh/authorized_keys
 
 ### 2-1. ホスト機を監視対象に含める場合
 
-このツールは `docker-compose.yml` で **`network_mode: host`** を指定しており、コンテナはホストと同じネットワーク名前空間で動作します。そのため、`config/servers.yaml` のホスト機エントリの `host` には **`localhost`** を指定してください（サンプルではそうなっています）。
+このツールは `docker-compose.yml` で **`network_mode: host`** を指定しており、コンテナはホストと同じネットワーク名前空間で動作します。
+
+ホスト機自身を監視対象に含める場合は、表示の統一感を保つため `host` には **実IPをそのまま書き**、`ssh_host` でSSH接続だけ `localhost` に上書きしてください。
 
 ```yaml
 - id: server-a
   name: 開発サーバA (ホスト)
-  host: localhost              # ← 管理ホスト自身を指す
+  host: 192.168.1.10           # ← 画面表示・既定のSSH接続先
+  ssh_host: localhost          # ← SSH接続だけ上書き（任意フィールド）
   ssh_user: devuser
   ssh_port: 22
 ```
+
+> 💡 `ssh_host` は任意フィールドです。指定がなければ `host` がそのままSSH接続に使われます（他3台は `host` だけ書けばOK）。
 
 > ℹ️ `network_mode: host` を採用した理由
 > - `host.docker.internal:host-gateway` は Docker Engine 20.10+ でしか動作せず、環境依存があったため

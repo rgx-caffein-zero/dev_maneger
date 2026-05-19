@@ -1,14 +1,22 @@
 # サーバ一覧
 # 増減は項目を追加・削除してください（ページ再読み込みで反映）。
 #
-# このツールは docker-compose.yml で network_mode: host を指定しているため、
-# 管理ホスト自身を監視対象に含める場合は host: localhost を指定してください。
+# フィールド:
+#   id        : 内部識別子（DB保存に使用）
+#   name      : 画面表示名
+#   host      : 画面表示・SSH接続のIP（基本はこれだけ書けばよい）
+#   ssh_host  : SSH接続だけを上書きしたい時に指定（任意）
+#                 例: 管理ホスト自身を監視対象にする場合、host は実IP、
+#                 ssh_host は localhost にする（network_mode: host 環境）
+#   ssh_user  : SSH接続ユーザ
+#   ssh_port  : SSHポート
 
 servers:
   # 管理ホスト自身（このツールが動いているサーバ）
   - id: server-a
     name: 開発サーバA (ホスト)
-    host: localhost
+    host: 192.168.1.10
+    ssh_host: localhost
     ssh_user: devuser
     ssh_port: 22
 

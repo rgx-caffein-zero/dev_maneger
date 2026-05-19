@@ -41,7 +41,8 @@ def _parse_int(value: str) -> int:
 
 
 def fetch_gpu_status(server: dict) -> dict:
-    host = server["host"]
+    # 表示用の host とは別に ssh_host が指定されていればそちらでSSH接続する
+    host = server.get("ssh_host") or server["host"]
     user = server["ssh_user"]
     port = int(server.get("ssh_port", 22))
 
