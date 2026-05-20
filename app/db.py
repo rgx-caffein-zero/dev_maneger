@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -122,3 +122,66 @@ def get_reservation(res_id: int) -> dict | None:
             "SELECT * FROM reservations WHERE id=?", (res_id,)
         ).fetchone()
         return dict(row) if row else None
+
+
+def find_available_slots(
+    server_id: str,
+    target_date: date,
+    duration_hours: int,
+    use_gpu: bool,
+    business_start_hour: int = 9,
+    business_end_hour: int = 21,
+    max_results: int = 5,
+) -> list[tuple[str, str]]:
+    """指定日の業務時間内で、連続して空いている候補スロットを返す。
+
+    干渉判定:
+      use_gpu=True  : 同一サーバのGPUあり予約のみを占有とみなす（既存の予約ルールと一致）
+      use_gpu=False : 同一サーバの全予約を占有とみなす（混雑回避視点）
+
+    Returns: [(start_at_iso, end_at_iso), ...] 最大 max_results 件、早い時刻順。
+    """
+    biz_window = business_end_hour - business_start_hour
+    if duration_hours <= 0 or duration_hours > biz_window:
+        return []
+
+    biz_start = datetime.combine(target_date, time(business_start_hour, 0))
+    biz_end = datetime.combine(target_date, time(business_end_hour, 0))
+
+    gpu_filter = "AND use_gpu = 1" if use_gpu else ""
+    query = f"""
+        SELECT start_at, end_at FROM reservations
+        WHERE server_id = ?
+          {gpu_filter}
+          AND NOT (end_at <= ? OR start_at >= ?)
+    """
+    params = [
+        server_id,
+        biz_start.isoformat(timespec="seconds"),
+        biz_end.isoformat(timespec="seconds"),
+    ]
+
+    with get_conn() as conn:
+        blockers = [
+            (datetime.fromisoformat(r[0]), datetime.fromisoformat(r[1]))
+            for r in conn.execute(query, params).fetchall()
+        ]
+
+    candidates: list[tuple[str, str]] = []
+    for start_h in range(business_start_hour, business_end_hour - duration_hours + 1):
+        cand_start = datetime.combine(target_date, time(start_h, 0))
+        cand_end = cand_start + timedelta(hours=duration_hours)
+
+        conflict = any(
+            not (cand_end <= b_start or cand_start >= b_end)
+            for b_start, b_end in blockers
+        )
+        if not conflict:
+            candidates.append((
+                cand_start.isoformat(timespec="seconds"),
+                cand_end.isoformat(timespec="seconds"),
+            ))
+            if len(candidates) >= max_results:
+                break
+
+    return candidates
