@@ -53,7 +53,12 @@ for k, v in FORM_DEFAULTS.items():
 if "edit_id" not in st.session_state:
     st.session_state.edit_id = None
 
-# ---- ワンショットトリガー（編集ロード／候補反映） ----
+# ---- ワンショットトリガー（リセット／編集ロード／候補反映） ----
+# ウィジェット生成後は session_state を変更できないため、フォームのリセットは
+# フラグを立てて次回の再描画（ウィジェット生成前のここ）で実行する
+if st.session_state.pop("trigger_form_reset", False):
+    _reset_form()
+
 if st.session_state.pop("trigger_edit_load", False):
     existing = get_reservation(st.session_state.edit_id)
     if existing:
@@ -255,7 +260,7 @@ if res:
 if cancelled:
     st.session_state.edit_id = None
     st.session_state.pop("sg_results", None)
-    _reset_form()
+    st.session_state.trigger_form_reset = True
     st.rerun()
 
 # ---- 登録/更新 ----
@@ -293,7 +298,7 @@ if submitted:
         st.success(f"申請ID #{st.session_state.edit_id} を更新しました")
         st.session_state.edit_id = None
         st.session_state.pop("sg_results", None)
-        _reset_form()
+        st.session_state.trigger_form_reset = True
         st.rerun()
     else:
         new_id = add_reservation(
@@ -302,7 +307,7 @@ if submitted:
         )
         st.success(f"申請ID #{new_id} を登録しました")
         st.session_state.pop("sg_results", None)
-        _reset_form()
+        st.session_state.trigger_form_reset = True
         st.rerun()
 
 # ---- 既存申請の一覧 ----
